@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+  <title>Playlists | VibeVault</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#100d19] text-white min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="flex items-center justify-between
+              px-6 py-5 border-b border-purple-900">
+    <a href="index.html"
+       class="text-2xl font-bold text-purple-400">
+      🎧 VibeVault
+    </a>
+
+    <a href="index.html"
+       class="text-gray-300 hover:text-purple-400">
+      Home
+    </a>
+  </nav>
+
+  <main class="max-w-6xl mx-auto px-5 py-10">
+
+    <h1 class="text-4xl font-bold mb-2">
+      Your Music, Your Vibe 💜
+    </h1>
+    <p class="text-gray-400 mb-10">
+      Create your collections and discover new music.
+    </p>
+
+    <!-- Your library -->
+    <section class="mb-12">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold">Your Library</h2>
+
+        <button id="createBtn"
+          class="bg-purple-600 hover:bg-purple-700
+                 px-4 py-3 rounded-xl">
+          + Create Playlist
+        </button>
+      </div>
+
+      <div id="userPlaylists"
+        class="grid grid-cols-2 md:grid-cols-4 gap-5">
+      </div>
+    </section>
+
+    <!-- Featured sections -->
+    <section id="featuredSections"></section>
+
+    <!-- Songs inside a selected playlist -->
+    <section id="playlistDetails"
+      class="hidden my-10 bg-[#1c1729]
+             rounded-2xl p-6">
+
+      <button id="backBtn"
+        class="text-purple-400 mb-5">
+        ← Back to Playlists
+      </button>
+
+      <h2 id="selectedTitle"
+        class="text-3xl font-bold mb-3"></h2>
+
+      <p id="selectedDescription"
+        class="text-gray-400 mb-6"></p>
+
+      <div id="songList" class="space-y-3"></div>
+    </section>
+
+  </main>
+
+  <!-- Create playlist modal -->
+  <div id="playlistModal"
+    class="hidden fixed inset-0 z-50 bg-black/80
+           flex items-center justify-center p-5">
+
+    <div class="bg-[#241b35] rounded-2xl
+                p-7 w-full max-w-md">
+
+      <h2 class="text-2xl font-bold mb-5">
+        Create Playlist 🎵
+      </h2>
+
+      <form id="playlistForm">
+        <input id="playlistName" required maxlength="50"
+          placeholder="Playlist name"
+          class="w-full p-3 mb-4 rounded-lg
+                 bg-[#382d4c] outline-none">
+
+        <input id="playlistDescription" maxlength="150"
+          placeholder="Description (optional)"
+          class="w-full p-3 mb-5 rounded-lg
+                 bg-[#382d4c] outline-none">
+
+        <div class="flex justify-end gap-3">
+          <button type="button" id="cancelBtn"
+            class="px-5 py-2 rounded-lg bg-gray-700">
+            Cancel
+          </button>
+
+          <button type="submit"
+            class="px-5 py-2 rounded-lg bg-purple-600">
+            Create
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Mini music player -->
+  <div id="miniPlayer"
+    class="hidden fixed bottom-0 left-0 right-0
+           bg-[#251c37] border-t border-purple-800
+           p-4 z-40">
+
+    <div class="max-w-6xl mx-auto flex flex-wrap
+                items-center gap-4">
+
+      <img id="playerCover" alt="Album cover"
+        class="w-12 h-12 rounded-lg object-cover">
+
+      <div class="flex-1 min-w-32">
+        <p id="playerTitle" class="font-bold"></p>
+        <p id="playerArtist"
+          class="text-sm text-gray-400"></p>
+      </div>
+
+      <audio id="audioPlayer" controls
+        class="w-full sm:w-64"></audio>
+    </div>
+  </div>
+  
+<!-- Add to Playlist Modal -->
+<div id="saveSongModal"
+  class="hidden fixed inset-0 z-50 bg-black/80
+         flex items-center justify-center p-5">
+
+  <div class="bg-[#241b35] rounded-2xl p-6
+              w-full max-w-md">
+
+    <div class="flex justify-between items-center mb-5">
+      <h2 class="text-2xl font-bold">
+        Add to Playlist
+      </h2>
+
+      <button id="closeSaveModal"
+        class="text-gray-400 text-2xl"
+        aria-label="Close">×</button>
+    </div>
+
+    <div class="flex items-center gap-4 mb-6">
+      <img id="saveSongCover" alt=""
+        class="w-16 h-16 rounded-lg object-cover">
+
+      <div>
+        <h3 id="saveSongTitle"
+          class="font-semibold"></h3>
+        <p id="saveSongArtist"
+          class="text-gray-400 text-sm"></p>
+      </div>
+    </div>
+
+    <div id="playlistOptions"
+      class="space-y-3 max-h-64 overflow-y-auto mb-5">
+    </div>
+
+    <button id="newPlaylistFromSong"
+      class="w-full border border-dashed
+             border-purple-400 rounded-xl p-3
+             text-purple-300 mb-4">
+      + Create New Playlist
+    </button>
+
+    <button id="confirmSaveSong"
+      class="w-full bg-purple-600 hover:bg-purple-700
+             rounded-xl p-3 font-semibold">
+      Save to Playlist
+    </button>
+
+  </div>
+</div>
+
+
+  <script src="playlists.js"></script>
+</body>
+</html>
