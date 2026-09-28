@@ -1,7 +1,8 @@
 const moodButtons = document.querySelectorAll(".mood-btn");
-const searchInput = document.querySelector("#searchInput");
 const searchButton = document.querySelector("#searchButton");
 const songContainer = document.querySelector("#songContainer");
+const searchInput = document.getElementById("searchInput");
+
 
 const favoritesContainer =
     document.querySelector("#favoritesContainer");
@@ -944,31 +945,32 @@ if (volumeButton) {
 }
 
 
+
+
+        
 if (searchButton && searchInput) {
+    searchButton.addEventListener("click", () => {
+        const searchText = searchInput.value.trim();
 
-    searchButton.addEventListener(
-        "click",
-        () => {
-
-            const searchText =
-                searchInput.value.trim();
-
-
-            if (searchText === "") {
-
-                alert(
-                    "Please enter a song or artist name."
-                );
-
-                return;
-            }
-
-
-            searchSongs(searchText);
-
+        if (!searchText) {
+            alert("Please enter a song or artist name.");
+            return;
         }
-    );
 
+        // Save the search and hide the dropdown
+        saveSearch(searchText);
+        searchHistoryBox?.classList.add("hidden");
+
+        // Display matching songs
+        searchSongs(searchText);
+    });
+
+    searchInput.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            searchButton.click();
+        }
+    });
+}
 
     searchInput.addEventListener(
         "keydown",
@@ -982,8 +984,6 @@ if (searchButton && searchInput) {
 
         }
     );
-
-}
 
 
 moodButtons.forEach(button => {
@@ -1070,3 +1070,145 @@ if (clearHistoryButton) {
 
 displayFavorites();
 displayHistory();
+
+
+// searchInput is already declared at the top.
+// Do NOT declare it again.
+
+const searchHistoryBox =
+    document.getElementById("searchHistory");
+
+const historyList =
+    document.getElementById("historyList");
+
+const clearHistoryBtn =
+    document.getElementById("clearHistory");
+
+const HISTORY_KEY = "vibevault_search_history";
+
+let searchHistory = JSON.parse(
+    localStorage.getItem(HISTORY_KEY) || "[]"
+);
+
+// Save a completed search
+function saveSearch(query) {
+    const term = query.trim();
+    if (!term) return;
+
+    // Avoid duplicate searches
+    searchHistory = searchHistory.filter(
+        item => item.toLowerCase() !== term.toLowerCase()
+    );
+
+    // Newest search appears first
+    searchHistory.unshift(term);
+
+    // Keep only the last 10 searches
+    searchHistory = searchHistory.slice(0, 10);
+
+    localStorage.setItem(
+        HISTORY_KEY,
+        JSON.stringify(searchHistory)
+    );
+}
+
+// Display recent searches beneath the search bar
+function displaySearchHistory(filter = "") {
+    if (!historyList || !searchHistoryBox) return;
+
+    historyList.replaceChildren();
+
+    const matches = searchHistory.filter(
+        item => item.toLowerCase().includes(
+            filter.toLowerCase()
+        )
+    );
+
+    if (matches.length === 0) {
+        searchHistoryBox.classList.add("hidden");
+        return;
+    }
+
+    searchHistoryBox.classList.remove("hidden");
+
+    matches.forEach(term => {
+        const row = document.createElement("div");
+
+        row.className =
+            "flex items-center gap-3 rounded-lg p-3 " +
+            "cursor-pointer hover:bg-purple-900/50";
+
+        const icon = document.createElement("span");
+        icon.textContent = "🕘";
+
+        const name = document.createElement("span");
+        name.textContent = term;
+        name.className = "flex-1 text-sm text-white";
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.textContent = "✕";
+        remove.className =
+            "text-gray-400 hover:text-red-400";
+
+        // Select a previous search and search again
+        row.addEventListener("click", () => {
+            searchInput.value = term;
+            searchHistoryBox.classList.add("hidden");
+
+            // Uses your existing search button
+            searchButton.click();
+        });
+
+        // Delete one search
+        remove.addEventListener("click", event => {
+            event.stopPropagation();
+
+            searchHistory = searchHistory.filter(
+                item => item !== term
+            );
+
+            localStorage.setItem(
+                HISTORY_KEY,
+                JSON.stringify(searchHistory)
+            );
+
+            displaySearchHistory(searchInput.value);
+        });
+
+        row.append(icon, name, remove);
+        historyList.appendChild(row);
+    });
+}
+
+// Open the dropdown when the search box is focused
+if (searchInput && searchHistoryBox && historyList) {
+    searchInput.addEventListener("focus", () => {
+        displaySearchHistory(searchInput.value);
+    });
+
+    // Filter previous searches while typing
+    searchInput.addEventListener("input", () => {
+        displaySearchHistory(searchInput.value);
+    });
+
+    // Clear all recent searches
+    clearHistoryBtn?.addEventListener("click", () => {
+        searchHistory = [];
+        localStorage.removeItem(HISTORY_KEY);
+
+        historyList.replaceChildren();
+        searchHistoryBox.classList.add("hidden");
+    });
+
+    // Close the dropdown when clicking outside
+    document.addEventListener("click", event => {
+        const clickedInside =
+            searchInput.contains(event.target) ||
+            searchHistoryBox.contains(event.target);
+
+        if (!clickedInside) {
+            searchHistoryBox.classList.add("hidden");
+        }
+    });
+}
