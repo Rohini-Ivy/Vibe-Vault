@@ -286,6 +286,14 @@
                     class="hidden rounded-full p-2 text-slate-300 transition hover:bg-slate-800 sm:block">
                     🔊
                 </button>
+                
+<button
+    id="lyricsButton"
+    class="rounded-xl bg-purple-600 px-4 py-2 text-sm
+           font-semibold transition hover:bg-purple-500"
+>
+    🎤 Lyrics
+            </button>
 
             </div>
 
@@ -298,5 +306,50 @@
 
     <script src="script.js"></script>
 
+<!-- Lyrics panel -->
+<div
+    id="lyricsPanel"
+    class="fixed inset-0 z-[60] hidden items-center
+           justify-center bg-black/80 p-4"
+>
+    <div
+        class="flex max-h-[85vh] w-full max-w-xl flex-col
+               rounded-2xl border border-purple-700
+               bg-slate-900 p-6 shadow-2xl"
+    >
+        <div class="mb-5 flex items-center justify-between">
+            <div class="min-w-0">
+                <h2 class="text-2xl font-bold text-purple-400">
+                    🎤 Live Lyrics
+                </h2>
+                <p
+                    id="lyricsSongTitle"
+                    class="mt-1 truncate text-sm text-slate-400"
+                ></p>
+            </div>
+
+            <button
+                id="closeLyrics"
+                type = "button"
+                class="rounded-lg px-3 py-2 hover:bg-slate-800"
+            >
+                ✕
+            </button>
+        </div>
+
+        <div
+            id="lyricsContent"
+            class="min-h-40 overflow-y-auto whitespace-pre-line
+                   py-5 text-center text-lg leading-loose
+                   text-slate-300"
+        >
+            Play a song to view its lyrics.
+        </div>
+
+        <p class="mt-4 text-center text-xs text-slate-500">
+            Lyrics provided by LRCLIB when available.
+        </p>
+    </div>
+</div>
 </body>
 </html>

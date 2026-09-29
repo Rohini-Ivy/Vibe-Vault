@@ -1212,3 +1212,201 @@ if (searchInput && searchHistoryBox && historyList) {
         }
     });
 }
+
+
+// ===================================
+// VIB EVAULT - LIVE LYRICS
+// ===================================
+
+const lyricsButton = document.getElementById("lyricsButton");
+const lyricsPanel = document.getElementById("lyricsPanel");
+const closeLyrics = document.getElementById("closeLyrics");
+const lyricsContent = document.getElementById("lyricsContent");
+const lyricsSongTitle = document.getElementById("lyricsSongTitle");
+
+let syncedLines = [];
+let lyricsTrackId = null;
+let lyricsRequestId = 0;
+
+function parseSyncedLyrics(lrc) {
+    return lrc.split("\n").flatMap(line => {
+        const match = line.match(
+            /^\[(\d+):(\d+(?:\.\d+)?)\]\s*(.*)$/
+        );
+
+        if (!match) return [];
+
+        return [{
+            time: Number(match[1]) * 60 + Number(match[2]),
+            text: match[3]
+        }];
+    });
+}
+
+function updateLyricsHighlight() {
+    if (
+        !syncedLines.length ||
+        lyricsPanel.classList.contains("hidden")
+    ) return;
+
+    // Preview audio may start at a different point in the full song.
+    const current = audioPlayer.currentTime;
+
+    let activeIndex = -1;
+
+    syncedLines.forEach((line, index) => {
+        if (current >= line.time) {
+            activeIndex = index;
+        }
+    });
+
+    const rows = lyricsContent.querySelectorAll("[data-lyric-line]");
+
+    rows.forEach((row, index) => {
+        const active = index === activeIndex;
+
+        row.classList.toggle("text-purple-400", active);
+        row.classList.toggle("font-bold", active);
+        row.classList.toggle("scale-105", active);
+        row.classList.toggle("text-slate-400", !active);
+
+        if (active) {
+            row.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+        }
+    });
+}
+
+async function loadLyrics(song) {
+    const requestId = ++lyricsRequestId;
+
+    syncedLines = [];
+    lyricsTrackId = song.trackId;
+
+    lyricsSongTitle.textContent =
+        `${song.trackName} — ${song.artistName}`;
+
+    lyricsContent.textContent = "Loading lyrics...";
+
+    try {
+        const url = new URL("https://lrclib.net/api/get");
+
+        url.searchParams.set("track_name", song.trackName);
+        url.searchParams.set("artist_name", song.artistName);
+
+        if (song.collectionName) {
+            url.searchParams.set(
+                "album_name",
+                song.collectionName
+            );
+        }
+
+        // Use the full track duration, not the preview duration.
+        if (song.trackTimeMillis) {
+            url.searchParams.set(
+                "duration",
+                Math.round(song.trackTimeMillis / 1000)
+            );
+        }
+
+        const response = await fetch(url);
+
+        if (requestId !== lyricsRequestId) return;
+
+        if (response.status === 404) {
+            lyricsContent.textContent =
+                "Lyrics are not available for this song.";
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error("Unable to retrieve lyrics");
+        }
+
+        const data = await response.json();
+
+        if (requestId !== lyricsRequestId) return;
+
+        if (data.syncedLyrics) {
+            syncedLines = parseSyncedLyrics(data.syncedLyrics);
+
+            if (syncedLines.length) {
+                lyricsContent.replaceChildren();
+
+                syncedLines.forEach((line, index) => {
+                    const row = document.createElement("p");
+
+                    row.dataset.lyricLine = index;
+                    row.textContent = line.text || "♪";
+
+                    row.className =
+                        "mb-5 text-slate-400 transition-all duration-300";
+
+                    lyricsContent.appendChild(row);
+                });
+
+                updateLyricsHighlight();
+                return;
+            }
+        }
+
+        if (data.plainLyrics) {
+            lyricsContent.textContent = data.plainLyrics;
+        } else {
+            lyricsContent.textContent =
+                "Lyrics are not available for this song.";
+        }
+    } catch (error) {
+        console.error("Lyrics error:", error);
+
+        if (requestId === lyricsRequestId) {
+            lyricsContent.textContent =
+                "Unable to load lyrics. Please try again.";
+        }
+    }
+}
+
+
+lyricsButton?.addEventListener("click", () => {
+     const panel = document.getElementById("lyricsPanel");
+    const content = document.getElementById("lyricsContent");
+
+    if (!panel || !content) {
+    console.error("Lyrics panel is missing from index.html");
+    return;
+}
+         panel.classList.remove("hidden");
+    panel.classList.add("flex");
+    
+
+
+    
+    if (!currentSong) {
+        Content.textContent =
+            "Play a song first to view its lyrics.";
+        return;
+    }
+
+    if (lyricsTrackId !== currentSong.trackId) {
+        loadLyrics(currentSong);
+    } else {
+        updateLyricsHighlight();
+    }
+});
+
+    closeLyrics?.addEventListener("click", () => {
+    const panel = document.getElementById("lyricsPanel");
+
+    if (!panel){
+
+    panel.style.display = "none";
+    }
+});
+
+
+audioPlayer?.addEventListener(
+    "timeupdate",
+    updateLyricsHighlight
+);
