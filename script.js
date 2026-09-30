@@ -41,6 +41,7 @@ const audioPlayer =
 
 const playerArtwork =
     document.querySelector("#playerArtwork");
+    const playerBackground = document.querySelector("#playerBackground");
 
 const playerTitle =
     document.querySelector("#playerTitle");
@@ -494,6 +495,7 @@ function addToHistory(song) {
 
 
     displayHistory();
+displayContinueListening();
 }
 
 
@@ -591,6 +593,117 @@ function displayHistory() {
 
     });
 }
+function displayContinueListening() {
+
+    const section =
+        document.getElementById(
+            "continueListeningSection"
+        );
+
+    const container =
+        document.getElementById(
+            "continueListeningContainer"
+        );
+
+    if (!section || !container) {
+        return;
+    }
+
+    const history =
+        JSON.parse(
+            localStorage.getItem("vibeHistory")
+        ) || [];
+
+    // Hide section when there is no history
+    if (history.length === 0) {
+        section.classList.add("hidden");
+        container.replaceChildren();
+        return;
+    }
+
+    // Show section
+    section.classList.remove("hidden");
+
+    container.replaceChildren();
+
+    history.slice(0, 5).forEach(song => {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "group overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 transition hover:-translate-y-1 hover:border-purple-500/50";
+
+        const artwork =
+            song.artworkUrl100
+                ? song.artworkUrl100.replace(
+                    "100x100",
+                    "400x400"
+                )
+                : "";
+
+        card.innerHTML = `
+            <div class="relative">
+
+                <img
+                    src="${artwork}"
+                    alt="${song.trackName}"
+                    class="h-48 w-full object-cover"
+                >
+
+                <button
+                    class="continue-play absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg transition hover:scale-110 hover:bg-purple-500"
+                    title="Play ${song.trackName}"
+                >
+                    ▶
+                </button>
+
+            </div>
+
+            <div class="p-4">
+
+                <h3
+                    class="truncate font-semibold"
+                    title="${song.trackName}"
+                >
+                    ${song.trackName}
+                </h3>
+
+                <p
+                    class="mt-1 truncate text-sm text-slate-400"
+                    title="${song.artistName}"
+                >
+                    ${song.artistName}
+                </p>
+
+            </div>
+        `;
+
+        container.appendChild(card);
+
+        const playButton =
+            card.querySelector(".continue-play");
+
+        playButton.addEventListener(
+            "click",
+            () => {
+
+                const latestHistory =
+                    JSON.parse(
+                        localStorage.getItem(
+                            "vibeHistory"
+                        )
+                    ) || [];
+
+                playSong(
+                    song,
+                    latestHistory
+                );
+            }
+        );
+
+    });
+}
 
 
 function playSong(
@@ -652,7 +765,19 @@ function playSong(
         );
 
     }
+if (playerBackground) {
+    if (song.artworkUrl100) {
+        const backgroundArtwork = song.artworkUrl100.replace(
+            "100x100",
+            "600x600"
+        );
 
+        playerBackground.style.backgroundImage =
+            `url("${backgroundArtwork}")`;
+    } else {
+        playerBackground.style.backgroundImage = "none";
+    }
+}
 
     musicPlayer.classList.remove(
         "hidden"
@@ -686,36 +811,26 @@ function playSong(
 
 if (playPauseButton) {
 
-    playPauseButton.addEventListener(
-        "click",
-        () => {
+    playPauseButton.addEventListener("click", () => {
+    console.log("BUTTON CLICKED");
 
-            if (!currentSong) {
-                return;
-            }
+    if (!currentSong) {
+        console.log("NO CURRENT SONG");
+        return;
+    }
 
+    console.log("Paused before click:", audioPlayer.paused);
 
-            if (audioPlayer.paused) {
+    if (audioPlayer.paused) {
+        audioPlayer.play();
+        playPauseButton.textContent = "⏸";
+    } else {
+        audioPlayer.pause();
+        playPauseButton.textContent = "▶";
+    }
 
-                audioPlayer.play()
-                    .then(() => {
-
-                        playPauseButton.textContent =
-                            "⏸";
-
-                    });
-
-            } else {
-
-                audioPlayer.pause();
-
-                playPauseButton.textContent =
-                    "▶";
-
-            }
-
-        }
-    );
+    console.log("Paused after click:", audioPlayer.paused);
+});
 
 }
 
@@ -1069,6 +1184,8 @@ if (clearHistoryButton) {
 
 
 displayFavorites();
+displayHistory();
+displayContinueListening();
 displayHistory();
 
 
