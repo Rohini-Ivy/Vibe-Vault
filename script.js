@@ -765,19 +765,16 @@ function playSong(
         );
 
     }
-if (playerBackground) {
-    if (song.artworkUrl100) {
-        const backgroundArtwork = song.artworkUrl100.replace(
-            "100x100",
-            "600x600"
-        );
 
+        if (playerBackground) {
+    if (song.artworkUrl100) {
         playerBackground.style.backgroundImage =
-            `url("${backgroundArtwork}")`;
+            `url("${song.artworkUrl100}")`;
     } else {
         playerBackground.style.backgroundImage = "none";
     }
 }
+
 
     musicPlayer.classList.remove(
         "hidden"
@@ -809,30 +806,7 @@ if (playerBackground) {
 }
 
 
-if (playPauseButton) {
 
-    playPauseButton.addEventListener("click", () => {
-    console.log("BUTTON CLICKED");
-
-    if (!currentSong) {
-        console.log("NO CURRENT SONG");
-        return;
-    }
-
-    console.log("Paused before click:", audioPlayer.paused);
-
-    if (audioPlayer.paused) {
-        audioPlayer.play();
-        playPauseButton.textContent = "⏸";
-    } else {
-        audioPlayer.pause();
-        playPauseButton.textContent = "▶";
-    }
-
-    console.log("Paused after click:", audioPlayer.paused);
-});
-
-}
 
 
 if (audioPlayer) {
@@ -853,9 +827,34 @@ if (audioPlayer) {
         }
     );
 
+       if (playPauseButton && audioPlayer) {
+    playPauseButton.addEventListener("click", () => {
+        console.log("BUTTON CLICKED");
 
-    audioPlayer.addEventListener(
-        "timeupdate",
+        if (!currentSong) {
+            console.log("NO CURRENT SONG");
+            return;
+        }
+
+        console.log("Paused before click:", audioPlayer.paused);
+
+        if (audioPlayer.paused) {
+            audioPlayer.play()
+                .then(() => {
+                    playPauseButton.textContent = "⏸";
+                    console.log("PLAYING");
+                })
+                .catch(error => {
+                    console.error("Playback failed:", error);
+                });
+        } else {
+            audioPlayer.pause();
+            playPauseButton.textContent = "▶";
+            console.log("PAUSED");
+        }
+    });
+}
+ "timeupdate",
         () => {
 
             progressBar.value =
@@ -868,8 +867,7 @@ if (audioPlayer) {
                 );
 
         }
-    );
-
+    
 
     audioPlayer.addEventListener(
         "play",
