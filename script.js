@@ -809,122 +809,68 @@ function playSong(
 
 
 
-if (audioPlayer) {
 
-    audioPlayer.addEventListener(
-        "loadedmetadata",
-        () => {
-
-            progressBar.max =
-                audioPlayer.duration;
-
-
-            duration.textContent =
-                formatTime(
-                    audioPlayer.duration
-                );
-
-        }
-    );
-
-       if (playPauseButton && audioPlayer) {
-    playPauseButton.addEventListener("click", () => {
-        console.log("BUTTON CLICKED");
-
-        if (!currentSong) {
-            console.log("NO CURRENT SONG");
-            return;
-        }
-
-        console.log("Paused before click:", audioPlayer.paused);
-
-        if (audioPlayer.paused) {
-            audioPlayer.play()
-                .then(() => {
-                    playPauseButton.textContent = "⏸";
-                    console.log("PLAYING");
-                })
-                .catch(error => {
-                    console.error("Playback failed:", error);
-                });
-        } else {
-            audioPlayer.pause();
-            playPauseButton.textContent = "▶";
-            console.log("PAUSED");
-        }
-    });
-}
- "timeupdate",
-        () => {
-
-            progressBar.value =
-                audioPlayer.currentTime;
-
-
-            currentTime.textContent =
-                formatTime(
-                    audioPlayer.currentTime
-                );
-
-        }
+   
     
 
-    audioPlayer.addEventListener(
-        "play",
-        () => {
+    
+        if (audioPlayer) {
+
+    audioPlayer.addEventListener("loadedmetadata", () => {
+        progressBar.max = audioPlayer.duration;
+
+        duration.textContent =
+            formatTime(audioPlayer.duration);
+    });
+
+
+    audioPlayer.addEventListener("timeupdate", () => {
+        progressBar.value = audioPlayer.currentTime;
+
+        currentTime.textContent =
+            formatTime(audioPlayer.currentTime);
+    });
+
+
+    audioPlayer.addEventListener("play", () => {
+        if (playPauseButton) {
+            playPauseButton.textContent = "⏸";
+        }
+    });
+
+
+    audioPlayer.addEventListener("pause", () => {
+        if (playPauseButton) {
+            playPauseButton.textContent = "▶";
+        }
+    });
+
+
+    audioPlayer.addEventListener("ended", () => {
+
+        if (
+            currentSongIndex !== -1 &&
+            currentSongList.length > 0
+        ) {
+
+            const nextIndex =
+                (currentSongIndex + 1) %
+                currentSongList.length;
+
+            playSong(
+                currentSongList[nextIndex],
+                currentSongList
+            );
+
+        } else {
 
             if (playPauseButton) {
-                playPauseButton.textContent =
-                    "⏸";
+                playPauseButton.textContent = "▶";
             }
 
         }
-    );
 
-
-    audioPlayer.addEventListener(
-        "pause",
-        () => {
-
-            if (playPauseButton) {
-                playPauseButton.textContent =
-                    "▶";
-            }
-
-        }
-    );
-
-
-    audioPlayer.addEventListener(
-        "ended",
-        () => {
-
-            if (
-                currentSongIndex !== -1 &&
-                currentSongList.length > 0
-            ) {
-
-                const nextIndex =
-                    (
-                        currentSongIndex + 1
-                    ) %
-                    currentSongList.length;
-
-
-                playSong(
-                    currentSongList[nextIndex],
-                    currentSongList
-                );
-
-            } else {
-
-                playPauseButton.textContent =
-                    "▶";
-
-            }
-
-        }
-    );
+    });
 
 }
 
@@ -941,6 +887,24 @@ if (progressBar) {
         }
     );
 
+}
+if (playPauseButton && audioPlayer) {
+    playPauseButton.addEventListener("click", () => {
+        console.log("BUTTON CLICKED");
+
+        if (!currentSong) {
+            console.log("NO CURRENT SONG");
+            return;
+        }
+
+        if (audioPlayer.paused) {
+            audioPlayer.play().catch(error => {
+                console.error("Playback failed:", error);
+            });
+        } else {
+            audioPlayer.pause();
+        }
+    });
 }
 
 
@@ -1359,51 +1323,79 @@ function parseSyncedLyrics(lrc) {
 }
 
 function updateLyricsHighlight() {
-    if (
-        !syncedLines.length ||
-        lyricsPanel.classList.contains("hidden")
-    ) return;
+    if (!audioPlayer || !syncedLines.length) return;
 
-    // Preview audio may start at a different point in the full song.
-    const current = audioPlayer.currentTime;
+    const lyricsContent =
+        document.getElementById("lyricsContent");
+
+    if (!lyricsContent) return;
+
+    const time = audioPlayer.currentTime;
 
     let activeIndex = -1;
 
-    syncedLines.forEach((line, index) => {
-        if (current >= line.time) {
-            activeIndex = index;
+    for (let i = 0; i < syncedLines.length; i++) {
+        if (time >= syncedLines[i].time) {
+            activeIndex = i;
+        } else {
+            break;
         }
+    }
+
+    const lines =
+        lyricsContent.querySelectorAll(".lyrics-line");
+
+    lines.forEach((line, index) => {
+        line.classList.toggle(
+            "text-purple-400",
+            index === activeIndex
+        );
+
+        line.classList.toggle(
+            "font-semibold",
+            index === activeIndex
+        );
+
+        line.classList.toggle(
+            "scale-105",
+            index === activeIndex
+        );
     });
 
-    const rows = lyricsContent.querySelectorAll("[data-lyric-line]");
-
-    rows.forEach((row, index) => {
-        const active = index === activeIndex;
-
-        row.classList.toggle("text-purple-400", active);
-        row.classList.toggle("font-bold", active);
-        row.classList.toggle("scale-105", active);
-        row.classList.toggle("text-slate-400", !active);
-
-        if (active) {
-            row.scrollIntoView({
-                behavior: "smooth",
-                block: "center"
-            });
-        }
-    });
+    if (activeIndex >= 0 && lines[activeIndex]) {
+        lines[activeIndex].scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+    }
 }
 
 async function loadLyrics(song) {
     const requestId = ++lyricsRequestId;
-
     syncedLines = [];
     lyricsTrackId = song.trackId;
+const lyricsSongTitle =
+        document.getElementById("lyricsSongTitle");
+
+    const lyricsContent =
+        document.getElementById("lyricsContent");
+
+    if (!lyricsSongTitle || !lyricsContent) {
+        console.error("Lyrics elements not found");
+        return;
+    }
 
     lyricsSongTitle.textContent =
         `${song.trackName} — ${song.artistName}`;
 
     lyricsContent.textContent = "Loading lyrics...";
+
+
+if (!lyricsContent) {
+    console.error("Lyrics content element not found");
+    return;
+}
+
 
     try {
         const url = new URL("https://lrclib.net/api/get");
@@ -1482,41 +1474,38 @@ async function loadLyrics(song) {
         }
     }
 }
-
-
 lyricsButton?.addEventListener("click", () => {
-     const panel = document.getElementById("lyricsPanel");
+    const panel = document.getElementById("lyricsPanel");
     const content = document.getElementById("lyricsContent");
 
     if (!panel || !content) {
-    console.error("Lyrics panel is missing from index.html");
-    return;
-}
-         panel.classList.remove("hidden");
-    panel.classList.add("flex");
-    
-
-
-    
-    if (!currentSong) {
-        Content.textContent =
-            "Play a song first to view its lyrics.";
+        console.error("Lyrics elements not found");
         return;
     }
 
-    if (lyricsTrackId !== currentSong.trackId) {
-        loadLyrics(currentSong);
-    } else {
-        updateLyricsHighlight();
+    panel.classList.remove("hidden");
+    panel.classList.add("flex");
+
+    console.log("LYRICS BUTTON CLICKED");
+    console.log("CURRENT SONG:", currentSong);
+
+    if (!currentSong) {
+        content.textContent = "Play a song first to view its lyrics.";
+        return;
     }
+
+    content.textContent = "Loading lyrics...";
+
+    loadLyrics(currentSong);
 });
 
-    closeLyrics?.addEventListener("click", () => {
+
+closeLyrics?.addEventListener("click", () => {
     const panel = document.getElementById("lyricsPanel");
 
-    if (!panel){
-
-    panel.style.display = "none";
+    if (panel) {
+        panel.classList.add("hidden");
+        panel.classList.remove("flex");
     }
 });
 
@@ -1525,3 +1514,43 @@ audioPlayer?.addEventListener(
     "timeupdate",
     updateLyricsHighlight
 );
+
+closeLyrics?.addEventListener("click", () => {
+    const panel = document.getElementById("lyricsPanel");
+
+    if (panel) {
+        panel.classList.add("hidden");
+        panel.classList.remove("flex");
+    }
+});
+
+
+audioPlayer?.addEventListener(
+    "timeupdate",
+    updateLyricsHighlight
+);
+
+// ===============================
+// CLOSE LYRICS
+// ===============================
+
+document.addEventListener("click", (event) => {
+
+    const button = event.target.closest("#closeLyrics");
+
+    if (!button) return;
+
+    const panel = document.getElementById("lyricsPanel");
+
+    if (!panel) return;
+
+    panel.classList.add("hidden");
+    panel.classList.remove("flex");
+});
+
+audioPlayer?.addEventListener(
+    "timeupdate",
+    updateLyricsHighlight
+);
+
+
