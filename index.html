@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="min-h-screen bg-slate-950 pb-28 text-white">
+<body class="min-h-screen bg-slate-950 text-white">
 
     <header class="border-b border-slate-800 bg-slate-950/95">
         <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-5">
@@ -104,8 +104,6 @@
     </div>
 </div>
 
-  <div id="historyList" class="space-y-1"></div>
-</div>
 
             </div>
 
@@ -207,7 +205,179 @@
                 </p>
             </div>
 
+<!-- ===============================
+     STICKY NOW PLAYING PLAYER
+================================ -->
 
+<section
+    id="currentlyPlayingSection"
+    class="sticky top-0 z-40 mx-auto max-w-7xl px-4 pb-6 hidden"
+>
+    <div
+        class="overflow-hidden rounded-3xl border border-purple-500/30
+               bg-slate-900/95 shadow-2xl shadow-purple-900/20
+               backdrop-blur-xl"
+    >
+
+        <!-- Header -->
+        <div
+            class="flex items-center gap-2 border-b border-slate-800
+                   px-6 py-3"
+        >
+            <span
+                class="h-2.5 w-2.5 animate-pulse rounded-full bg-purple-500"
+            ></span>
+
+            <p
+                class="text-sm font-semibold uppercase tracking-widest
+                       text-purple-300"
+            >
+                Now Playing
+            </p>
+        </div>
+
+
+        <!-- Player -->
+        <div
+            class="flex flex-col gap-5 p-5
+                   sm:flex-row sm:items-center"
+        >
+
+            <!-- Artwork -->
+            <img
+                id="currentPlayingArtwork"
+                src=""
+                alt="Currently playing"
+                class="h-28 w-28 shrink-0 rounded-2xl
+                       object-cover shadow-xl
+                       sm:h-32 sm:w-32"
+            >
+
+
+            <!-- Song details -->
+            <div class="min-w-0 flex-1">
+
+                <h3
+                    id="currentPlayingTitle"
+                    class="truncate text-xl font-bold text-white
+                           sm:text-2xl"
+                >
+                    Song Title
+                </h3>
+
+                <p
+                    id="currentPlayingArtist"
+                    class="mt-1 truncate text-sm text-slate-400"
+                >
+                    Artist
+                </p>
+
+
+                <!-- Progress -->
+                <div
+                    class="mt-4 flex items-center gap-3"
+                >
+
+                    <span
+                        id="currentPlayingTime"
+                        class="w-10 text-xs text-slate-400"
+                    >
+                        0:00
+                    </span>
+
+                    <input
+                        id="currentPlayingProgress"
+                        type="range"
+                        min="0"
+                        max="0"
+                        value="0"
+                        class="h-1 flex-1 cursor-pointer
+                               accent-purple-500"
+                    >
+
+                    <span
+                        id="currentPlayingDuration"
+                        class="w-10 text-right text-xs
+                               text-slate-400"
+                    >
+                        0:00
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- Controls -->
+            <div
+                class="flex shrink-0 items-center justify-center
+                       gap-2 sm:gap-3"
+            >
+
+                <!-- Previous -->
+                <button
+                    id="previousButton"
+                    class="flex h-10 w-10 items-center
+                           justify-center rounded-full
+                           bg-slate-800 text-lg transition
+                           hover:bg-slate-700"
+                    title="Previous"
+                >
+                    ⏮
+                </button>
+
+
+                <!-- Play / Pause -->
+                <button
+                    id="currentPlayingPlayPause"
+                    class="flex h-12 w-12 items-center
+                           justify-center rounded-full
+                           bg-purple-600 text-lg shadow-lg
+                           transition hover:bg-purple-500"
+                    title="Play / Pause"
+                >
+                    ▶
+                </button>
+
+
+                <!-- Next -->
+                <button
+                    id="nextButton"
+                    class="flex h-10 w-10 items-center
+                           justify-center rounded-full
+                           bg-slate-800 text-lg transition
+                           hover:bg-slate-700"
+                    title="Next"
+                >
+                    ⏭
+                </button>
+
+
+                <!-- Lyrics -->
+                <button
+                    id="lyricsButton"
+                    class="flex h-10 items-center
+                           justify-center rounded-full
+                           bg-slate-800 px-4 text-sm
+                           font-medium transition
+                           hover:bg-slate-700"
+                    title="Lyrics"
+                >
+                    🎤 Lyrics
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+
+<!-- Audio engine -->
+<audio id="audioPlayer"></audio>
+
+                
             <div
                 id="songContainer"
                 class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -218,113 +388,6 @@
     </main>
 
 
-    <div
-        id="musicPlayer"
-        class="fixed bottom-0 left-0 right-0 z-50  hidden relative overflow-hidden border-t border-slate-800 bg-slate-950/75 backdrop-blur-lg">
-<div
-    id="playerBackground"
-    class="absolute inset-0 z-0 pointer-events-none bg-cover bg-center opacity-50 blur-2xl scale-110 transition-all duration-700">
-</div>
-        <div class="relative z-10 mx-auto max-w-7xl px-4 py-3"></div>
-
-            <div class="flex items-center gap-3 sm:gap-4">
-
-                <img
-                    id="playerArtwork"
-                    src=""
-                    alt="Album artwork"
-                    class="hidden h-14 w-14 rounded-lg object-cover sm:block"
-                >
-
-
-                <div class="min-w-0 w-32 sm:w-56">
-
-                    <h4
-                        id="playerTitle"
-                        class="truncate font-semibold">
-                        No song playing
-                    </h4>
-
-                    <p
-                        id="playerArtist"
-                        class="truncate text-sm text-slate-400">
-                        Select a song to play
-                    </p>
-
-                </div>
-
-
-                <div class="flex items-center gap-1 sm:gap-2">
-
-                    <button
-                        id="previousButton"
-                        class="rounded-full p-2 text-slate-300 transition hover:bg-slate-800">
-                        ⏮
-                    </button>
-
-                    <button
-                        id="playPauseButton"
-                        class="flex h-10 w-10 items-center justify-center rounded-full bg-purple-600 transition hover:bg-purple-500">
-                        ▶
-                    </button>
-
-                    <button
-                        id="nextButton"
-                        class="rounded-full p-2 text-slate-300 transition hover:bg-slate-800">
-                        ⏭
-                    </button>
-f
-                </div>
-
-
-                <div class="hidden flex-1 items-center gap-3 md:flex">
-
-                    <span
-                        id="currentTime"
-                        class="text-xs text-slate-400">
-                        0:00
-                    </span>
-
-                    <input
-                        id="progressBar"
-                        type="range"
-                        min="0"
-                        max="100"
-                        value="0"
-                        class="w-full accent-purple-500"
-                    >
-
-                    <span
-                        id="duration"
-                        class="text-xs text-slate-400">
-                        0:00
-                    </span>
-
-                </div>
-
-
-                <button
-                    id="volumeButton"
-                    class="hidden rounded-full p-2 text-slate-300 transition hover:bg-slate-800 sm:block">
-                    🔊
-                </button>
-                
-<button
-    id="lyricsButton"
-    class="rounded-xl bg-purple-600 px-4 py-2 text-sm
-           font-semibold transition hover:bg-purple-500"
->
-    🎤 Lyrics
-            </button>
-
-            </div>
-
-
-            <audio id="audioPlayer"></audio>
-
-        </div>
-
-    </div>
 
     <script src="script.js"></script>
 

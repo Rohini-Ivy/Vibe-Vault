@@ -1,3 +1,8 @@
+const HISTORY_KEY = "vibevault_search_history";
+
+let searchHistory = JSON.parse(
+    localStorage.getItem(HISTORY_KEY) || "[]"
+);
 const moodButtons = document.querySelectorAll(".mood-btn");
 const searchButton = document.querySelector("#searchButton");
 const songContainer = document.querySelector("#songContainer");
@@ -33,33 +38,29 @@ const moodSearchTerms = {
 };
 
 
-const musicPlayer =
-    document.querySelector("#musicPlayer");
-
 const audioPlayer =
     document.querySelector("#audioPlayer");
 
 const playerArtwork =
-    document.querySelector("#playerArtwork");
-    const playerBackground = document.querySelector("#playerBackground");
+    document.querySelector("#currentPlayingArtwork");
 
 const playerTitle =
-    document.querySelector("#playerTitle");
+    document.querySelector("#currentPlayingTitle");
 
 const playerArtist =
-    document.querySelector("#playerArtist");
+    document.querySelector("#currentPlayingArtist");
 
 const playPauseButton =
-    document.querySelector("#playPauseButton");
+    document.querySelector("#currentPlayingPlayPause");
 
 const progressBar =
-    document.querySelector("#progressBar");
+    document.querySelector("#currentPlayingProgress");
 
 const currentTime =
-    document.querySelector("#currentTime");
+    document.querySelector("#currentPlayingTime");
 
 const duration =
-    document.querySelector("#duration");
+    document.querySelector("#currentPlayingDuration");
 
 const previousButton =
     document.querySelector("#previousButton");
@@ -69,11 +70,97 @@ const nextButton =
 
 const volumeButton =
     document.querySelector("#volumeButton");
+// ===================================
+// CURRENTLY PLAYING SECTION
+// ===================================
+
+const currentlyPlayingSection =
+    document.querySelector("#currentlyPlayingSection");
+
 
 
 let currentSong = null;
 let currentSongList = [];
 let currentSongIndex = -1;
+
+
+function displaySongs(songs) {
+    if (!songContainer) return;
+
+    songContainer.innerHTML = "";
+
+    if (!songs || songs.length === 0) {
+        songContainer.innerHTML = `
+            <p class="col-span-full text-center text-slate-400 py-10">
+                No songs found 🎵
+            </p>
+        `;
+        return;
+    }
+
+    songs.forEach((song) => {
+        if (!song.previewUrl) return;
+
+        const card = document.createElement("div");
+
+        card.className =
+            "group overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 transition hover:-translate-y-1 hover:border-purple-500/50";
+
+        const artwork = song.artworkUrl100
+            ? song.artworkUrl100.replace("100x100", "400x400")
+            : "";
+
+        card.innerHTML = `
+            <div class="relative">
+                <img
+                    src="${artwork}"
+                    alt="${song.trackName || "Song"}"
+                    class="h-48 w-full object-cover"
+                >
+
+                <button
+                    class="play-song absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-purple-600 text-lg shadow-lg transition hover:scale-110"
+                    type="button"
+                >
+                    ▶
+                </button>
+            </div>
+
+            <div class="p-4">
+                <h3 class="truncate font-semibold text-white">
+                    ${song.trackName || "Unknown Song"}
+                </h3>
+
+                <p class="mt-1 truncate text-sm text-slate-400">
+                    ${song.artistName || "Unknown Artist"}
+                </p>
+
+                <button
+                    class="favorite-song mt-3 text-xl transition hover:scale-110"
+                    type="button"
+                    title="Add to favorites"
+                >
+                    ♡
+                </button>
+            </div>
+        `;
+
+        songContainer.appendChild(card);
+
+        const playButton = card.querySelector(".play-song");
+
+        playButton.addEventListener("click", () => {
+            playSong(song, songs);
+        });
+
+        const favoriteButton = card.querySelector(".favorite-song");
+
+        favoriteButton.addEventListener("click", () => {
+            addFavorite(song);
+            favoriteButton.textContent = "♥";
+        });
+    });
+}
 
 
 async function searchSongs(term) {
@@ -154,123 +241,60 @@ async function searchSongs(term) {
 }
 
 
-function displaySongs(songs) {
+function playSong(song, songList = []) {
 
-    if (!songContainer) {
+    if (!song.previewUrl) {
+        alert("Preview unavailable for this song.");
         return;
     }
 
+    currentSong = song;
 
-    songContainer.innerHTML = "";
+    currentSongList =
+        Array.isArray(songList)
+            ? songList
+            : [];
 
+    currentSongIndex =
+        currentSongList.findIndex(
+            item => item.trackId === song.trackId
+        );
 
-    songs.forEach(song => {
+    audioPlayer.src = song.previewUrl;
+    audioPlayer.currentTime = 0;
 
-        const card =
-            document.createElement("div");
+    playerTitle.textContent =
+        song.trackName || "Unknown Song";
 
+    playerArtist.textContent =
+        song.artistName || "Unknown Artist";
 
-        card.className =
-            "overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 transition hover:-translate-y-1 hover:border-purple-500/50";
+    if (song.artworkUrl100) {
+        playerArtwork.src =
+            song.artworkUrl100.replace(
+                "100x100",
+                "400x400"
+            );
+    }
 
+    currentlyPlayingSection.classList.remove("hidden");
 
-        const artwork =
-            song.artworkUrl100
-                ? song.artworkUrl100.replace(
-                    "100x100",
-                    "400x400"
-                )
-                : "";
+    updateCurrentlyPlaying(song);
 
+    addToHistory(song);
 
-        card.innerHTML = `
+    audioPlayer.play()
+        .then(() => {
+            playPauseButton.textContent = "⏸";
+        })
+        .catch(error => {
+            console.error(
+                "Playback could not start:",
+                error
+            );
 
-            <img
-                src="${artwork}"
-                alt="${song.trackName}"
-                class="h-64 w-full object-cover"
-            >
-
-
-            <div class="p-5">
-
-                <h3
-                    class="truncate text-lg font-semibold"
-                    title="${song.trackName}">
-                    ${song.trackName}
-                </h3>
-
-
-                <p
-                    class="mt-1 truncate text-sm text-slate-400"
-                    title="${song.artistName}">
-                    ${song.artistName}
-                </p>
-
-
-                <p
-                    class="mt-1 truncate text-xs text-slate-500"
-                    title="${song.collectionName || ""}">
-                    ${song.collectionName || "Unknown Album"}
-                </p>
-
-
-                <div class="mt-5 grid grid-cols-2 gap-2">
-
-                    <button
-                        class="play-song rounded-xl bg-purple-600 py-2 text-sm font-medium transition hover:bg-purple-500">
-                        ▶ Play
-                    </button>
-
-
-                    <button
-                        class="favorite-song rounded-xl border border-slate-700 py-2 text-sm transition hover:bg-slate-800">
-                        ❤️ Save
-                    </button>
-
-                </div>
-
-
-                <a
-                    href="${song.trackViewUrl || "#"}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="mt-2 block rounded-xl border border-slate-800 py-2 text-center text-sm text-slate-400 transition hover:bg-slate-800 hover:text-white">
-                    🔗 Open
-                </a>
-
-            </div>
-        `;
-
-
-        songContainer.appendChild(card);
-
-
-        const playButton =
-            card.querySelector(".play-song");
-
-
-        const favoriteButton =
-            card.querySelector(".favorite-song");
-
-
-        playButton.addEventListener("click", () => {
-
-            playSong(song, songs);
-
+            playPauseButton.textContent = "▶";
         });
-
-
-        favoriteButton.addEventListener("click", () => {
-
-            addFavorite(song);
-
-            favoriteButton.textContent =
-                "❤️ Saved";
-
-        });
-
-    });
 }
 
 
@@ -704,8 +728,6 @@ function displayContinueListening() {
 
     });
 }
-
-
 function playSong(
     song,
     songList = []
@@ -721,9 +743,21 @@ function playSong(
     }
 
 
+    // Store currently playing song
     currentSong = song;
 
+    // Update the NEW "Currently Playing" section
+    updateCurrentlyPlaying(song);
 
+
+    // Remember the currently playing song
+    localStorage.setItem(
+        "vibeCurrentSong",
+        JSON.stringify(song)
+    );
+
+
+    // Store song list for next/previous
     currentSongList =
         Array.isArray(songList)
             ? songList
@@ -737,21 +771,22 @@ function playSong(
         );
 
 
+    // Set audio
     audioPlayer.src =
         song.previewUrl;
-
 
     audioPlayer.currentTime = 0;
 
 
+    // Update bottom player
     playerTitle.textContent =
         song.trackName || "Unknown Song";
-
 
     playerArtist.textContent =
         song.artistName || "Unknown Artist";
 
 
+    // Update artwork
     if (song.artworkUrl100) {
 
         playerArtwork.src =
@@ -766,24 +801,18 @@ function playSong(
 
     }
 
-        if (playerBackground) {
-    if (song.artworkUrl100) {
-        playerBackground.style.backgroundImage =
-            `url("${song.artworkUrl100}")`;
-    } else {
-        playerBackground.style.backgroundImage = "none";
-    }
-}
 
-
-    musicPlayer.classList.remove(
+    // Show bottom player
+    currentlyPlayingSection.classList.remove(
         "hidden"
     );
 
 
+    // Add to listening history
     addToHistory(song);
 
 
+    // Start playing
     audioPlayer.play()
         .then(() => {
 
@@ -804,6 +833,56 @@ function playSong(
         });
 
 }
+
+
+       ///  UPDATE CURRENTLY PLAYING SECTION
+// ===================================
+
+function updateCurrentlyPlaying(song) {
+
+    if (
+        !currentlyPlayingSection ||
+        !currentPlayingArtwork ||
+        !currentPlayingTitle ||
+        !currentPlayingArtist
+    ) {
+        return;
+    }
+
+    currentlyPlayingSection.classList.remove("hidden");
+
+    currentPlayingTitle.textContent =
+        song.trackName || "Unknown Song";
+
+    currentPlayingArtist.textContent =
+        song.artistName || "Unknown Artist";
+
+
+    if (song.artworkUrl100) {
+
+        currentPlayingArtwork.src =
+            song.artworkUrl100.replace(
+                "100x100",
+                "400x400"
+            );
+
+    }
+
+
+    currentPlayingTime.textContent = "0:00";
+    currentPlayingDuration.textContent = "0:00";
+
+    currentPlayingProgress.value = 0;
+    currentPlayingProgress.max = 0;
+
+
+    if (audioPlayer && !audioPlayer.paused) {
+        currentPlayingPlayPause.textContent = "⏸";
+    } else {
+        currentPlayingPlayPause.textContent = "▶";
+    }
+}
+
 
 
 
@@ -1163,11 +1242,7 @@ const historyList =
 const clearHistoryBtn =
     document.getElementById("clearHistory");
 
-const HISTORY_KEY = "vibevault_search_history";
 
-let searchHistory = JSON.parse(
-    localStorage.getItem(HISTORY_KEY) || "[]"
-);
 
 // Save a completed search
 function saveSearch(query) {
